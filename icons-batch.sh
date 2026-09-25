@@ -1,0 +1,44 @@
+#!/bin/sh
+# Usage: icons-batch.sh [seed ...]
+# Writes one PNG per seed, named <seed>.png, into a new icons-<timestamp> directory under the current directory.
+
+
+# nvm's zsh hook is not loaded in sh, so find dicebear ourselves.
+if ! command -v dicebear >/dev/null 2>&1; then
+  for d in "$HOME"/.nvm/versions/node/*/bin; do
+    [ -x "$d/dicebear" ] && PATH="$d:$PATH"
+  done
+fi
+command -v dicebear >/dev/null 2>&1 || { echo "dicebear not found" >&2; exit 1; }
+
+## Set seed(s) from command line or prompt for one if none given
+if [ $# -eq 0 ]; then
+  printf 'Enter a seed: '
+  read -r seed
+  [ -n "$seed" ] || { echo "No seed given." >&2; exit 1; }
+  set -- "$seed"
+fi
+
+# Setup directories
+
+## Create output directory
+outputdir="icons-$(date +%Y%m%d-%H%M%S)"
+mkdir "$outputdir" || exit 1
+
+## Create temporary directory
+tmp=$(mktemp -d) || exit 1
+trap 'rm -rf "$tmp"' EXIT
+
+
+# For each seed, generate a PNG and move it.
+for seed in "$@"; do
+
+  # Generate a safe filename from the seed
+  name=$(printf '%s' "$seed" | tr '/' '_')
+
+  # Generate the PNG using dicebear AND move it to the output directory
+  dicebear blobs "$tmp" --format png --backgroundColor '1e293b' --scale 0.69 --seed "$seed" >/dev/null &&
+    mv "$tmp/blobs-0.png" "$outputdir/$name.png" &&
+    echo "wrote $outputdir/$name.png" ||
+    echo "failed: $seed" >&2
+done
