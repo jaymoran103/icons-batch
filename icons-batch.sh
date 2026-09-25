@@ -3,13 +3,18 @@
 # Writes one PNG per seed, named <seed>.png, into a new icons-<timestamp> directory under the current directory.
 
 
-# nvm's zsh hook is not loaded in sh, so find dicebear ourselves.
-if ! command -v dicebear >/dev/null 2>&1; then
+DICEBEAR_VERSION=10.7.0
+
+# nvm's zsh hook is not loaded in sh, so find npx ourselves.
+if ! command -v npx >/dev/null 2>&1; then
   for d in "$HOME"/.nvm/versions/node/*/bin; do
-    [ -x "$d/dicebear" ] && PATH="$d:$PATH"
+    [ -x "$d/npx" ] && PATH="$d:$PATH"
   done
 fi
-command -v dicebear >/dev/null 2>&1 || { echo "dicebear not found" >&2; exit 1; }
+command -v npx >/dev/null 2>&1 || { echo "Node 22+ is required: https://nodejs.org" >&2; exit 1; }
+
+# Run a pinned dicebear through npx, fetched once into the npm cache.
+dicebear() { npx --yes "dicebear@$DICEBEAR_VERSION" "$@"; }
 
 ## Set seed(s) from command line or prompt for one if none given
 if [ $# -eq 0 ]; then
